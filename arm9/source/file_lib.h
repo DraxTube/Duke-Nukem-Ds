@@ -151,7 +151,7 @@ enum
 //                          filename - standard filename
 //
 //==========================================================================
-//void GetPathFromEnvironment( char *fullname, int32 length, const char *filename );
+void GetPathFromEnvironment( char *fullname, int32 length, const char *filename );
 
 //==========================================================================
 //
