@@ -333,7 +333,7 @@ char loadsound(unsigned short num)
     soundsiz[num] = l;
     Sound[num].lock = 200;
 	int thelock = 1;
-	uint16* pData;
+	byte *pData;
     allocache((long *)&Sound[num].ptr,l,(unsigned char *)&Sound[num].lock);
 	allocache((long *)&pData,l,(unsigned char *)&thelock);
 
@@ -388,7 +388,7 @@ char loadsound(unsigned short num)
                 case 4:
                     bits = 16;
                     samples = blockLength-2;
-                    mix16(pptrPos, &ptr[2], samples/2);
+                    mix16((uint16_t *)pptrPos, (uint16_t *)&ptr[2], samples/2);
                     pptrPos += samples;
                     break;
             }
@@ -405,7 +405,7 @@ char loadsound(unsigned short num)
                 case 4:
                     bits = 16;
                     samples = blockLength;
-                    mix16(pptrPos, &ptr[0], samples/2);
+                    mix16((uint16_t *)pptrPos, (uint16_t *)&ptr[0], samples/2);
                     pptrPos += samples;
                     break;
             }
@@ -424,7 +424,7 @@ char loadsound(unsigned short num)
                     break;
                 case 4:
                     samples = blockLength-12;
-                    mix16(pptrPos, &ptr[12], samples/2);
+                    mix16((uint16_t *)pptrPos, (uint16_t *)&ptr[12], samples/2);
                     pptrPos += samples;
                     break;
             }
@@ -476,7 +476,7 @@ char loadsound2(unsigned short num)
 	//snddebug("size[%d].", soundsiz[num]);
     Sound[num].lock = 200;
 	int thelock = 1;
-	uint16* pData;// =(uint16*)(0x06020000);
+	byte *pData; // =(uint16*)(0x06020000);
 	/*char* pData = (char*)malloc( soundsiz[num] );*/
 	//if(pData == NULL) snddebug("out of memory");
     allocache((long *)&Sound[num].ptr,l,(unsigned char *)&Sound[num].lock);
