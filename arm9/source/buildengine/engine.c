@@ -4022,7 +4022,7 @@ int getMemUsed() { // returns the amount of used memory in bytes
 
 int getMemFree() { // returns the amount of free memory in bytes 
    struct mallinfo mi = mallinfo(); 
-   return mi.fordblks + (getHeapLimit() - getHeapEnd()); 
+   return mi.fordblks; 
 }
 
 #endif
@@ -8869,5 +8869,3 @@ void setfirstwall(short sectnum, short newfirstwall)
 }
 
 /* end of engine.c ... */
-
-
