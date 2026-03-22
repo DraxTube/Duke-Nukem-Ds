@@ -53,14 +53,14 @@ void   SCRIPT_GetDouble( int32 scripthandle, char * sectionname, char * entrynam
 
 void   SCRIPT_PutComment( int32 scripthandle, char * sectionname, char * comment );
 void   SCRIPT_PutEOL( int32 scripthandle, char * sectionname );
-void   SCRIPT_PutMultiComment( int32 scripthandle, char * sectionname, char * comment );
+void   SCRIPT_PutMultiComment( int32 scripthandle, char * sectionname, char * comment, ... );
 void   SCRIPT_PutSection( int32 scripthandle, char * sectionname );
-void   SCRIPT_PutRaw( int32 scripthandle, char * sectionname, char * raw );
+void   SCRIPT_PutRaw( int32 scripthandle, char * sectionname, char * entryname, char * raw );
 void   SCRIPT_PutString( int32 scripthandle, char * sectionname, char * entryname, char * string );
 void   SCRIPT_PutDoubleString( int32 scripthandle, char * sectionname, char * entryname, char * string1, char * string2 );
 void   SCRIPT_PutNumber( int32 scripthandle, char * sectionname, char * entryname, int32 number, boolean hexadecimal, boolean defaultvalue );
 void   SCRIPT_PutDouble( int32 scripthandle, char * sectionname, char * entryname, double number, boolean defaultvalue );
-void   SCRIPT_PutBoolean( int32 scripthandle, char * sectionname, char * entryname, boolean boolval, boolean defaultvalue );
+void   SCRIPT_PutBoolean( int32 scripthandle, char * sectionname, char * entryname, boolean boolval );
 void   SCRIPT_PutFloat( int32 scripthandle, char * sectionname, char * entryname, float number, boolean defaultvalue );
 
 #ifdef __cplusplus
