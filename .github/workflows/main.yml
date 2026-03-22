@@ -11,14 +11,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: devkitpro/devkitarm:latest
+      image: devkitpro/devkitarm-nds:latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Install nds-dev tools
-        run: dkp-pacman -Sy --noconfirm nds-dev
 
       - name: Build ARM7
         run: |
