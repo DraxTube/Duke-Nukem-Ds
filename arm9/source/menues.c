@@ -30,6 +30,7 @@ Prepared for public release: 03/21/2003 - Charlie Wiederhold, 3D Realms
 
 /* this should be a proper prototype included from a header file */
 extern int stricmp(const char *x, const char *y);
+extern void Pause(unsigned int ms);
 
 extern short inputloc;
 extern int recfilep;
@@ -4100,4 +4101,3 @@ void playanm(char *fn,char t)
     ANIM_FreeAnim ();
     walock[MAXTILES-3-t] = 1;
 }
-
