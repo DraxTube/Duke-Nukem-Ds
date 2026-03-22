@@ -26,9 +26,6 @@ Prepared for public release: 03/21/2003 - Charlie Wiederhold, 3D Realms
 
 #include "duke3d.h"
 
-/* SafeMalloc and IntelLong are excluded from funct.h on NDS, declare them here */
-extern void *SafeMalloc(long size);
-extern long IntelLong(long l);
 
 //=============
 // STATICS
