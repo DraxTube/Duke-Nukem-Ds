@@ -31,6 +31,8 @@
 
 
 #include "fx_man.h"
+/* GetTicks is defined in ds_driver.c */
+extern uint32 GetTicks(void);
 #include "music.h"
 
 #define __FX_TRUE  (1 == 1)
@@ -869,12 +871,12 @@ static int setupVocPlayback(char *ptr, int size, int priority, unsigned long cal
 		if (size == -1) {
 			snddebug("SIZE IS UNKNOWN");
 			//chunk=malloc(1024*1024);
-			ConvertUnsignedToSigned(ptr,chunk,1024*1024);
+			ConvertUnsignedToSigned((u8*)ptr,(u8*)*chunk,0xFFFF);
 		}
 		else
 		{
 			//chunk=malloc(size);
-			ConvertUnsignedToSigned(ptr,chunk,size);
+			ConvertUnsignedToSigned((u8*)ptr,(u8*)*chunk,(u16)(size > 0xFFFF ? 0xFFFF : size));
 		    if (*chunk == NULL)
 			{
 				setErrorMessage("Couldn't decode voice sample.");
