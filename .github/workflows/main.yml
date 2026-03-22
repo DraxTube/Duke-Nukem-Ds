@@ -17,9 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build ARM7
-        run: cd arm7 && make
-
       - name: Build ARM9
         run: cd arm9 && make
 
