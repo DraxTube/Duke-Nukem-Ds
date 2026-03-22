@@ -1,0 +1,51 @@
+name: Build Duke3DS
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install devkitARM via devkitpro-pacman
+        run: |
+          wget https://apt.devkitpro.org/install-devkitpro-pacman
+          chmod +x install-devkitpro-pacman
+          sudo ./install-devkitpro-pacman
+          sudo dkp-pacman -Sy --noconfirm nds-dev
+
+      - name: Set devkitARM environment
+        run: |
+          echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
+          echo "DEVKITARM=/opt/devkitpro/devkitARM" >> $GITHUB_ENV
+          echo "/opt/devkitpro/devkitARM/bin" >> $GITHUB_PATH
+          echo "/opt/devkitpro/tools/bin" >> $GITHUB_PATH
+
+      - name: Build ARM7
+        run: |
+          cd arm7
+          make
+
+      - name: Build ARM9
+        run: |
+          cd arm9
+          make
+
+      - name: Build final NDS ROM
+        run: |
+          make
+
+      - name: Upload duke3d.nds artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: duke3d-nds
+          path: duke3d.nds
+          retention-days: 30
