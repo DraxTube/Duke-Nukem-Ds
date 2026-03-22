@@ -7,6 +7,9 @@ endif
 
 include $(DEVKITARM)/ds_rules
 
+# Explicit fallback in case ds_rules does not set LIBNDS
+LIBNDS	?=	$(DEVKITPRO)/libnds
+
 #---------------------------------------------------------------------------------
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
@@ -40,13 +43,13 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lfat -lnds9 -lm
+LIBS	:=	-lfat -lnds9 -lcalico9 -lm
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS)
+LIBDIRS	:=	$(LIBNDS) $(DEVKITPRO)/calico
  
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
