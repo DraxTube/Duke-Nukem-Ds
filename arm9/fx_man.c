@@ -29,10 +29,14 @@
 #define cdecl
 #endif
 
-
+#include "SDL.h"
+#include "SDL_mixer.h"
+#ifdef ROTT
+#include "rt_def.h"      // ROTT music hack
+#include "rt_cfg.h"      // ROTT music hack
+#include "rt_util.h"     // ROTT music hack
+#endif
 #include "fx_man.h"
-/* GetTicks is defined in ds_driver.c */
-extern uint32 GetTicks(void);
 #include "music.h"
 
 #define __FX_TRUE  (1 == 1)
@@ -52,7 +56,7 @@ typedef struct __DUKECHANINFO
 {
     int in_use;                 // 1 or 0.
     int priority;               // priority, defined by application.
-	uint32 birthday;			// ticks when channel was grabbed.
+    Uint32 birthday;            // ticks when channel was grabbed.
     unsigned long callbackval;  // callback value from application.
 } duke_channel_info;
 
@@ -62,7 +66,7 @@ int MUSIC_ErrorCode = MUSIC_Ok;
 static char warningMessage[80];
 static char errorMessage[80];
 static int fx_initialized = 0;
-static int numChannels = 16;//MIX_CHANNELS;
+static int numChannels = MIX_CHANNELS;
 static void (*callback)(unsigned long);
 static int reverseStereo = 0;
 static int reverbDelay = 256;
@@ -78,7 +82,7 @@ static duke_channel_info *chaninfo = NULL;
 #define CHUNK_CACHE_SIZE 128
 typedef struct __DUKECHUNKCACHE
 {
-    uint32 *chunk;
+    Mix_Chunk *chunk;
     void *dataptr;
 } duke_chunk_cache;
 static duke_chunk_cache chunkCache[CHUNK_CACHE_SIZE];
@@ -160,7 +164,7 @@ static void channelDoneCallback(int channel)
 //  go to the file that is specified in that variable. Otherwise, they
 //  are ignored for the expense of the function call. If DUKESND_DEBUG is
 //  set to "-" (without the quotes), then the output goes to stdout.
-void snddebug(const char *fmt, ...)
+static void snddebug(const char *fmt, ...)
 {
     va_list ap;
 
@@ -201,7 +205,7 @@ static void init_debugging(void)
     if (initialized_debugging)
         return;
 
-    envr =  getenv(DUKESND_DEBUG);
+    envr = getenv(DUKESND_DEBUG);
     if (envr != NULL)
     {
         if (strcmp(envr, "-") == 0)
@@ -223,10 +227,9 @@ static void init_debugging(void)
 //  This would be a race condition, but hey, it's for a DOS game.  :)
 static int grabMixerChannel(int priority)
 {
-
     int replaceable = -1;
     int i;
-//#ifndef __NDS__
+
     if (!fx_initialized)
         return(-1);
 
@@ -236,11 +239,7 @@ static int grabMixerChannel(int priority)
         {
             chaninfo[i].in_use = 1;
             chaninfo[i].priority = priority;
-#ifndef __NDS__
             chaninfo[i].birthday = SDL_GetTicks();
-#else
-			chaninfo[i].birthday = GetTicks();
-#endif
             return(i);
         } // if
 
@@ -260,13 +259,9 @@ static int grabMixerChannel(int priority)
     {
         chaninfo[replaceable].in_use = 1;
         chaninfo[replaceable].priority = priority;
-#ifndef __NDS__ 
         chaninfo[replaceable].birthday = SDL_GetTicks();
-#else
-		chaninfo[replaceable].birthday = GetTicks();
-#endif
     } // if
-//#endif
+
     return(replaceable);
 } // grabMixerChannel
 
@@ -347,7 +342,6 @@ int FX_SetupSoundBlaster(fx_blaster_config blaster, int *MaxVoices,
 
 int FX_SetupCard( int SoundCard, fx_device *device )
 {
-//#ifndef __NDS__
     init_debugging();
 
     snddebug("FX_SetupCard looking at card id #%d...", SoundCard);
@@ -372,28 +366,25 @@ int FX_SetupCard( int SoundCard, fx_device *device )
     device->MaxVoices = 8;
     device->MaxSampleBits = 16;       // SDL_mixer downsamples if needed.
     device->MaxChannels = 2;          // SDL_mixer converts to mono if needed.
-//#endif
+
     return(FX_Ok);
 } // FX_SetupCard 
 
 
-static void output_versions(const char *libname, const uint32 *compiled,
-							const uint32 *linked)
+static void output_versions(const char *libname, const SDL_version *compiled,
+							const SDL_version *linked)
 {
-#ifndef __NDS__
     snddebug("This program was compiled against %s %d.%d.%d,\n"
              " and is dynamically linked to %d.%d.%d.\n", libname,
              compiled->major, compiled->minor, compiled->patch,
              linked->major, linked->minor, linked->patch);
-#endif
 }
 
 
 static void output_version_info(void)
 {
-#ifndef __NDS__
-    Uint32 compiled;
-    const uint32 *linked;
+    SDL_version compiled;
+    const SDL_version *linked;
 
     snddebug("Library check...");
 
@@ -404,15 +395,13 @@ static void output_version_info(void)
     MIX_VERSION(&compiled);
     linked = Mix_Linked_Version();
     output_versions("SDL_mixer", &compiled, linked);
-#endif
 } // output_version_info
 
 
 int FX_Init(int SoundCard, int numvoices, int numchannels,
             int samplebits, unsigned mixrate)
 {
-/*#ifndef __NDS__*/  
-    uint16 audio_format = 0;
+    Uint16 audio_format = 0;
     int blocksize;
 
     init_debugging();
@@ -454,7 +443,7 @@ int FX_Init(int SoundCard, int numvoices, int numchannels,
 
     // build pan tables
     MV_CalcPanTable();
-  #ifndef __NDS__
+    
     SDL_ClearError();
     if (SDL_Init(SDL_INIT_AUDIO) < 0)
     {
@@ -464,12 +453,13 @@ int FX_Init(int SoundCard, int numvoices, int numchannels,
     } // if
 
     audio_format = (samplebits == 8) ? AUDIO_U8 : AUDIO_S16;
-
+#ifndef __NDS__
     if (Mix_OpenAudio(mixrate, audio_format, numchannels, 256) < 0)
     {
         setErrorMessage(SDL_GetError());
         return(FX_Error);
     } // if
+#endif
     output_version_info();
 
     numChannels = Mix_AllocateChannels(numvoices);
@@ -479,36 +469,24 @@ int FX_Init(int SoundCard, int numvoices, int numchannels,
         Mix_CloseAudio();
         return(FX_Error);
     } // if
-#else
-	//snddebug("setGenericSound\n");
-	//	setGenericSound(	mixrate,	/* sample rate */
-	//					127,	/* volume */
-	//					64,		/* panning */
-	//					0 );	/* sound format*/
-#endif
+
     blocksize = sizeof (duke_channel_info) * numvoices;
     chaninfo = malloc(blocksize);
     if (chaninfo == NULL)  // uhoh.
     {
         setErrorMessage("Out of memory");
-#ifndef __NDS__
         Mix_CloseAudio();
-#endif
         return(FX_Error);
     } // if
     memset(chaninfo, '\0', blocksize);
-#ifndef __NDS__
+
     Mix_ChannelFinished(channelDoneCallback);
-#endif
     maxReverbDelay = (int) (((float) mixrate) * 0.5);
 
-#ifndef __NDS__
     Mix_QuerySpec(NULL, NULL, &mixerIsStereo);
-#endif
     mixerIsStereo = (mixerIsStereo == 2);
 
     memset(chunkCache, '\0', sizeof (chunkCache));
-//#endif
 
     fx_initialized = 1;
     return(FX_Ok);
@@ -521,30 +499,26 @@ void FX_CleanCache(void)
     int i;
 
     snddebug("FX_CleanCache halting all channels.");
-#ifndef __NDS__ 
     Mix_HaltChannel(-1);  // stop everything.
-#endif
+
     snddebug("freeing cached chunks.");
     for (i = 0; i < CHUNK_CACHE_SIZE; i++)
     {
         if (chunkCache[i].chunk != NULL)
         {
             total++;
-#ifndef __NDS__ 
             Mix_FreeChunk(chunkCache[i].chunk);
-#endif
             chunkCache[i].chunk = NULL;
         } // if
         chunkCache[i].dataptr = NULL;
     } // for
-//#endif
+
     snddebug("cached chunks deallocation complete. (%d) were deleted.", total);
 } // FX_CleanCache
 
 
 int FX_Shutdown( void )
 {
-
     snddebug("shutting down sound subsystem.");
 
     if (!fx_initialized)
@@ -554,9 +528,7 @@ int FX_Shutdown( void )
     } // if
 
     FX_CleanCache();  // stops all channels and music.
-#ifndef __NDS__ 
     Mix_CloseAudio();
-#endif
     callback = NULL;
     free(chaninfo);
     chaninfo = NULL;
@@ -580,28 +552,20 @@ int FX_SetCallBack(void (*func)(unsigned long))
 void FX_SetVolume(int volume)
 {
     snddebug("setting master volume to %f.2 percent.", (volume / 255.0) * 100);
-#ifndef __NDS__ 
     Mix_Volume(-1, volume >> 1);  // it's 0-128 in SDL_mixer, not 0-255.
-#endif
 } // FX_SetVolume
 
 
 int FX_GetVolume(void)
 {
-#ifndef __NDS__ 
     return(Mix_Volume(-1, -1) << 1);
-#else
-	return 127;
-#endif
 } // FX_GetVolume
 
 
 void FX_SetReverseStereo(int setting)
 {
     snddebug("Reverse stereo set to %s.\n", setting ? "ON" : "OFF");
-#ifndef __NDS__ 
     Mix_SetReverseStereo(MIX_CHANNEL_POST, setting);
-#endif
     reverseStereo = setting;
 } // FX_SetReverseStereo
 
@@ -684,15 +648,12 @@ static int doSetPan(int handle, int vol, int left,
                     int right, int checkIfPlaying)
 {
     int retval = FX_Warning;
-#ifndef __NDS__
+
     if ((handle < 0) || (handle >= numChannels))
         setWarningMessage("Invalid handle in doSetPan().");
-
     else if ((checkIfPlaying) && (!Mix_Playing(handle)))
-
         setWarningMessage("voice is no longer playing in doSetPan().");
     else
-#endif
     {
         if (mixerIsStereo)
         {
@@ -705,9 +666,7 @@ static int doSetPan(int handle, int vol, int left,
 
             else
             {
-#ifndef __NDS__ 
                 Mix_SetPanning(handle, left, right);
-#endif
             } // else
         } // if
         else
@@ -720,15 +679,13 @@ static int doSetPan(int handle, int vol, int left,
             else
             {
                 // volume must be from 0-128, so the ">> 1" converts.
-#ifndef __NDS__
                 Mix_Volume(handle, vol >> 1);
-#endif
             } // else
         } // else
 
-
         retval = FX_Ok;
     } // else
+
     return(retval);
 } // doSetPan
 
@@ -752,11 +709,8 @@ int FX_SetFrequency(int handle, int frequency)
     return(FX_Ok);
 } // FX_SetFrequency
 
-#ifndef __NDS__ 
+
 static Mix_Chunk *findChunkInCache(void *ptr)
-#else
-static uint32 *findChunkInCache(void *ptr)
-#endif
 {
     // !!! FIXME: Optimize!  --ryan.
     int i;
@@ -770,11 +724,8 @@ static uint32 *findChunkInCache(void *ptr)
     return(NULL);
 } // findChunkInCache
 
-#ifndef __NDS__ 
+
 static void addChunkToCache(Mix_Chunk *chunk, void *ptr)
-#else
-static void addChunkToCache(uint32 *chunk, void *ptr)
-#endif
 {
     // !!! FIXME: Optimize!  --ryan.
     int i;
@@ -792,36 +743,16 @@ static void addChunkToCache(uint32 *chunk, void *ptr)
     assert(0);  // !!! FIXME.
 } // addChunkToCache
 
-void  ConvertUnsignedToSigned(u8 *bufsrc,u8 *bufdst, u16 taille) 
-{ 
-  while (taille--) 
-  { 
-    *bufdst = (*bufsrc) ;//- 128; 
-    bufsrc++; bufdst++;
-  } 
-	//for(; taille > 3; taille -= 4, bufsrc += 4) { 
- //   *((u32*)bufdst) = *((u32*)bufsrc) ^ 0x80808080; 
- //   } 
-	//for(; taille > 0; --taille, ++bufsrc) { 
- //   *bufdst = *bufsrc ^ 0x80; 
- // }
 
-}
 // If this returns FX_Ok, then chunk and chan will be filled with the
 //  the block of audio data in the format desired by the audio device
 //  and the SDL_mixer channel it will play on, respectively.
 //  If the value is not FX_Ok, then the warning or error message is set,
 //  and you should bail.
 // size added by SBF for ROTT
-#ifndef __NDS__ 
 static int setupVocPlayback(char *ptr, int size, int priority, unsigned long callbackval,
                             int *chan, Mix_Chunk **chunk)
-#else
-static int setupVocPlayback(char *ptr, int size, int priority, unsigned long callbackval,
-                            int *chan, uint32 **chunk)
-#endif
 {
-#ifndef __NDS__
     SDL_RWops *rw;
 
     *chan = grabMixerChannel(priority);
@@ -863,32 +794,6 @@ static int setupVocPlayback(char *ptr, int size, int priority, unsigned long cal
         addChunkToCache(*chunk, (void *) ptr);
     } // if
     chaninfo[*chan].callbackval = callbackval;
-#else
-	
-	*chunk = findChunkInCache(ptr);
-    if (*chunk == NULL)
-    {
-		if (size == -1) {
-			snddebug("SIZE IS UNKNOWN");
-			//chunk=malloc(1024*1024);
-			ConvertUnsignedToSigned((u8*)ptr,(u8*)*chunk,0xFFFF);
-		}
-		else
-		{
-			//chunk=malloc(size);
-			ConvertUnsignedToSigned((u8*)ptr,(u8*)*chunk,(u16)(size > 0xFFFF ? 0xFFFF : size));
-		    if (*chunk == NULL)
-			{
-				setErrorMessage("Couldn't decode voice sample.");
-				chaninfo[*chan].in_use = 0;
-				return(FX_Error);
-				
-			}
-			addChunkToCache(*chunk, (void *) ptr);
-		}
-	}
-
-#endif
     return(FX_Ok);
 } // setupVocPlayback
 
@@ -904,9 +809,9 @@ static int _FX_SetPosition(int chan, int angle, int distance)
         distance  = -distance;
         angle    += MV_NumPanPositions / 2;
     }
-  
+    
     volume = MIX_VOLUME( distance );
-
+    
     // Ensure angle is within 0 - 31
     angle &= MV_MaxPanPosition;
     
@@ -915,7 +820,7 @@ static int _FX_SetPosition(int chan, int angle, int distance)
     mid   = max( 0, 255 - distance );
 
     status = doSetPan( chan, mid, left, right, 0 );
-  
+    
     return status;
 }
 
@@ -925,11 +830,7 @@ int FX_PlayVOC(char *ptr, int pitchoffset,
 {
     int rc;
     int chan;
-#ifndef __NDS__
     Mix_Chunk *chunk;
-#else
-	uint32 *chunk;
-#endif
 
     snddebug("Playing voice: mono (%d), left (%d), right (%d), priority (%d).\n",
                 vol, left, right, priority);
@@ -946,12 +847,8 @@ int FX_PlayVOC(char *ptr, int pitchoffset,
         chaninfo[chan].in_use = 0;
         return(rc);
     } // if
-#ifndef __NDS__
+
     Mix_PlayChannel(chan, chunk, 0);
-#else
-	//snddebug("playGenericSound\n");
-	//playGenericSound(chunk, 1024*1024);
-#endif
     return(HandleOffset + chan);
 } // FX_PlayVOC
 
@@ -959,11 +856,10 @@ int FX_PlayVOC(char *ptr, int pitchoffset,
 // get the size of a single sample, in bytes.
 static int getSampleSize(void)
 {
-    uint16 format;
+    Uint16 format;
     int channels;
-#ifndef __NDS__
+
     Mix_QuerySpec(NULL, &format, &channels);
-#endif
     return( ((format & 0xFF) / 8) * channels );
 } // getSampleSize
 
@@ -975,12 +871,8 @@ int FX_PlayLoopedVOC(char *ptr, long loopstart, long loopend,
     int rc;
     int chan;
     int samplesize = getSampleSize();
-    uint32 totalsamples;
-#ifndef __NDS__
+    Uint32 totalsamples;
     Mix_Chunk *chunk;
-#else
-	uint32 *chunk;
-#endif
 
     snddebug("Playing voice: mono (%d), left (%d), right (%d), priority (%d).\n",
                 vol, left, right, priority);
@@ -991,7 +883,7 @@ int FX_PlayLoopedVOC(char *ptr, long loopstart, long loopend,
         return(rc);
 
     // !!! FIXME: Need to do something with pitchoffset.
-#ifndef __NDS__
+
     totalsamples = chunk->alen / samplesize;
 
     if ((loopstart >= 0) && ((unsigned int)loopstart < totalsamples))
@@ -1017,14 +909,8 @@ int FX_PlayLoopedVOC(char *ptr, long loopstart, long loopend,
             chunk->alen -= loopstart;
         } // if
     } // if
-#endif
-   
-#ifndef __NDS__
-     Mix_PlayChannel(chan, chunk, -1);  /* -1 == looping. */
-#else
-	//snddebug("playGenericSoundLoop\n");
-	//playGenericSound(chunk, 1024*1024);
-#endif
+
+    Mix_PlayChannel(chan, chunk, -1);  /* -1 == looping. */
     return(HandleOffset + chan);
 } // FX_PlayLoopedVOC
 
@@ -1033,57 +919,20 @@ int FX_PlayVOC3D(char *ptr, int pitchoffset, int angle, int distance,
 {
     int rc;
     int chan;
-#ifndef __NDS__
     Mix_Chunk *chunk;
-#else
-	uint32 *chunk;
-#endif
-    //printf("Playing voice at angle (%d), distance (%d), priority (%d).\n",
-    //            angle, distance, priority);
 
-    //rc = setupVocPlayback(ptr, -1, priority, callbackval, &chan, &chunk);
-    //if (rc != FX_Ok)
-    //    return(rc);
+    snddebug("Playing voice at angle (%d), distance (%d), priority (%d).\n",
+                angle, distance, priority);
+
+    rc = setupVocPlayback(ptr, -1, priority, callbackval, &chan, &chunk);
+    if (rc != FX_Ok)
+        return(rc);
 
     // !!! FIXME: Need to do something with pitchoffset.
 
-    //_FX_SetPosition(chan, angle, distance);
-    int left;
-    int right;
-    int mid;
-    int volume;
-    int status;
+    _FX_SetPosition(chan, angle, distance);
 
-    if ( distance < 0 ) {
-        distance  = -distance;
-        angle    += MV_NumPanPositions / 2;
-    }
-  
-    volume = MIX_VOLUME( distance );
-
-    // Ensure angle is within 0 - 31
-    angle &= MV_MaxPanPosition;
-    
-    left  = MV_PanTable[ angle ][ volume ].left;
-    right = MV_PanTable[ angle ][ volume ].right;
-    mid   = max( 0, 255 - distance );
-    snddebug("for song %d, left %d , right %d , volume %d\n",callbackval,left,right,mid>>1);
-#ifndef __NDS__
-     Mix_PlayChannel(chan, chunk, 0);
-#else
-    soundPlaySample(Sound[ callbackval ].ptr, Sound[ callbackval ].bits == 16 ? SoundFormat_16Bit : SoundFormat_8Bit, soundsiz[callbackval], Sound[ callbackval ].speed, mid>>1, left>>1, false, 0);
-		#if 0
-            TransferSoundData blaster = {
-			Sound[ callbackval ].ptr,		/* Sample address */
-			soundsiz[callbackval],	/* Sample length */
-			Sound[ callbackval ].speed,				/* Sample rate */
-			mid>>1,				/* Volume */
-			left>>1,					/* panning */
-			1 					/* format */
-		 };
-		playSound(&blaster);
-        #endif
-#endif
+    Mix_PlayChannel(chan, chunk, 0);
     return(HandleOffset + chan);
 } // FX_PlayVOC3D
 
@@ -1093,7 +942,6 @@ int FX_PlayVOC3D_ROTT(char *ptr, int size, int pitchoffset, int angle, int dista
 {
     int rc;
     int chan;
-#ifndef __NDS__
     Mix_Chunk *chunk;
 
     snddebug("Playing voice at angle (%d), distance (%d), priority (%d).\n",
@@ -1107,9 +955,7 @@ int FX_PlayVOC3D_ROTT(char *ptr, int size, int pitchoffset, int angle, int dista
 
     _FX_SetPosition(chan, angle, distance);
 
-
     Mix_PlayChannel(chan, chunk, 0);
-#endif
 
     return(HandleOffset + chan);
 } // FX_PlayVOC3D_ROTT
@@ -1169,14 +1015,12 @@ int FX_Pan3D(int handle, int angle, int distance)
     int retval = FX_Warning;
 
     handle -= HandleOffset;
-#ifndef __NDS__
+
     if ((handle < 0) || (handle >= numChannels))
         setWarningMessage("Invalid handle in FX_Pan3D().");
-
     else if (!Mix_Playing(handle))
         setWarningMessage("voice is no longer playing in FX_Pan3D().");
     else
-#endif
     {
         _FX_SetPosition(handle, angle, distance);
         
@@ -1189,8 +1033,8 @@ int FX_Pan3D(int handle, int angle, int distance)
 
 int FX_SoundActive(int handle)
 {
-
     handle -= HandleOffset;
+
     if (chaninfo == NULL)
         return(__FX_FALSE);
 
@@ -1199,24 +1043,21 @@ int FX_SoundActive(int handle)
         setWarningMessage("Invalid handle in FX_SoundActive().");
         return(__FX_FALSE);
     } // if
+
     return(chaninfo[handle].in_use != 0);
 } // FX_SoundActive
 
 
 int FX_SoundsPlaying(void)
 {
-#ifndef __NDS__
     return(Mix_Playing(-1));
-#else
-	return 0;
-#endif
 } // FX_SoundsPlaying
 
 
 int FX_StopSound(int handle)
 {
     int retval = FX_Ok;
-#ifndef __NDS__
+
     snddebug("explicitly halting channel (%d).", handle);
         // !!! FIXME: Should the user callback fire for this?
 
@@ -1229,10 +1070,9 @@ int FX_StopSound(int handle)
     } // if
     else
     {
-
         Mix_HaltChannel(handle);
     } // else
-#endif
+
     return(retval);
 } // FX_StopSound
 
@@ -1241,9 +1081,7 @@ int FX_StopAllSounds(void)
 {
     snddebug("halting all channels.");
         // !!! FIXME: Should the user callback fire for this?
-#ifndef __NDS__
     Mix_HaltGroup(-1);
-#endif
     return(FX_Ok);
 } // FX_StopAllSounds
 
@@ -1324,15 +1162,10 @@ static int music_initialized = 0;
 static int music_context = 0;
 static int music_loopflag = MUSIC_PlayOnce;
 static char *music_songdata = NULL;
-#ifndef __NDS__
 static Mix_Music *music_musicchunk = NULL;
-#else
-static uint32 *music_musicchunk = NULL;
-#endif
 
 int MUSIC_Init(int SoundCard, int Address)
 {
-#ifndef __NDS__
     init_debugging();
 
     musdebug("INIT! card=>%d, address=>%d...", SoundCard, Address);
@@ -1349,7 +1182,7 @@ int MUSIC_Init(int SoundCard, int Address)
         musdebug("We pretend to be an Ensoniq SoundScape only.");
         return(MUSIC_Error);
     } // if
-#endif
+
     music_initialized = 1;
     return(MUSIC_Ok);
 } // MUSIC_Init
@@ -1357,7 +1190,6 @@ int MUSIC_Init(int SoundCard, int Address)
 
 int MUSIC_Shutdown(void)
 {
-#ifndef __NDS__
     musdebug("shutting down sound subsystem.");
 
     if (!music_initialized)
@@ -1370,7 +1202,7 @@ int MUSIC_Shutdown(void)
     music_context = 0;
     music_initialized = 0;
     music_loopflag = MUSIC_PlayOnce;
-#endif
+
     return(MUSIC_Ok);
 } // MUSIC_Shutdown
 
@@ -1383,9 +1215,7 @@ void MUSIC_SetMaxFMMidiChannel(int channel)
 
 void MUSIC_SetVolume(int volume)
 {
-#ifndef __NDS__
     Mix_VolumeMusic(volume >> 1);  // convert 0-255 to 0-128.
-#endif
 } // MUSIC_SetVolume
 
 
@@ -1403,9 +1233,7 @@ void MUSIC_ResetMidiChannelVolumes(void)
 
 int MUSIC_GetVolume(void)
 {
-#ifndef __NDS__
     return(Mix_VolumeMusic(-1) << 1);  // convert 0-128 to 0-255.
-#endif
 } // MUSIC_GetVolume
 
 
@@ -1417,34 +1245,27 @@ void MUSIC_SetLoopFlag(int loopflag)
 
 int MUSIC_SongPlaying(void)
 {
-#ifndef __NDS__
     return((Mix_PlayingMusic()) ? __FX_TRUE : __FX_FALSE);
-#endif
 } // MUSIC_SongPlaying
 
 
 void MUSIC_Continue(void)
 {
-#ifndef __NDS__
     if (Mix_PausedMusic())
         Mix_ResumeMusic();
     else if (music_songdata)
         MUSIC_PlaySong(music_songdata, MUSIC_PlayOnce);
-#endif
 } // MUSIC_Continue
 
 
 void MUSIC_Pause(void)
 {
-#ifndef __NDS__
     Mix_PauseMusic();
-#endif
 } // MUSIC_Pause
 
 
 int MUSIC_StopSong(void)
 {
-#ifndef __NDS__
     if (!fx_initialized)
     {
         setErrorMessage("Need FX system initialized, too. Sorry.");
@@ -1459,14 +1280,12 @@ int MUSIC_StopSong(void)
 
     music_songdata = NULL;
     music_musicchunk = NULL;
-#endif
     return(MUSIC_Ok);
 } // MUSIC_StopSong
 
 
 int MUSIC_PlaySong(unsigned char *song, int loopflag)
 {
-#ifndef __NDS__
     //SDL_RWops *rw;
 
     MUSIC_StopSong();
@@ -1488,7 +1307,7 @@ int MUSIC_PlaySong(unsigned char *song, int loopflag)
     */
 
 STUBBED("Need to use PlaySongROTT.  :(");
-#endif
+
     return(MUSIC_Ok);
 } // MUSIC_PlaySong
 
@@ -1498,7 +1317,6 @@ extern char ApogeePath[256];
 // Duke3D-specific.  --ryan.
 void PlayMusic(char *_filename)
 {
-#ifndef __NDS__
     //char filename[MAX_PATH];
     //strcpy(filename, _filename);
     //FixFilePath(filename);
@@ -1549,13 +1367,13 @@ void PlayMusic(char *_filename)
     free(song);
     
     //music_songdata = song;
+
     music_musicchunk = Mix_LoadMUS("tmpsong.mid");
     if (music_musicchunk != NULL)
     {
         // !!! FIXME: I set the music to loop. Hope that's okay. --ryan.
         Mix_PlayMusic(music_musicchunk, -1);
     } // if
-#endif
 }
 
 
@@ -1635,20 +1453,14 @@ void MUSIC_GetSongLength(songposition *pos)
 
 int MUSIC_FadeVolume(int tovolume, int milliseconds)
 {
-#ifndef __NDS__
     Mix_FadeOutMusic(milliseconds);
-#endif
     return(MUSIC_Ok);
 } // MUSIC_FadeVolume
 
 
 int MUSIC_FadeActive(void)
 {
-#ifndef __NDS__
     return((Mix_FadingMusic() == MIX_FADING_OUT) ? __FX_TRUE : __FX_FALSE);
-#else
-	return 0;
-#endif
 } // MUSIC_FadeActive
 
 
