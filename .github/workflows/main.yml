@@ -17,6 +17,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install nds-calico
+        run: dkp-pacman -Sy --noconfirm nds-calico
+
       - name: Build ARM9
         run: cd arm9 && make
 
