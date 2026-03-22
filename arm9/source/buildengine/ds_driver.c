@@ -187,7 +187,7 @@ static long mouse_relative_y = 0;
 static short mouse_buttons = 0;
 static int mouse_grabbed = 0;
 static unsigned int lastkey = 0;
-static uint32 primary_timer = NULL;
+static uint32 primary_timer = 0;
 /* so we can make use of setcolor16()... - DDOI */
 static unsigned char drawpixel_color=0;
 /* These hold the colors for the 256 color palette when in 16-color mode - DDOI */
@@ -493,7 +493,7 @@ static int sdl_mouse_motion_filter(uint32 const *event)
 		
 		if (keysHeld() & KEY_TOUCH)
 		{
-			thisXY = touchReadXY();
+			touchRead(&thisXY);
 
 			int16 dx = thisXY.px - lastXY.px;
 			int16 dy = thisXY.py - lastXY.py;
@@ -1380,7 +1380,7 @@ void nds_init() {
 	REG_BG3PD = (1 << 8);  // 1.0 in 8.8 fixed point
 	REG_BG3X = 0;
 	REG_BG3Y = 0;
-	surface=(uint8*)(0x06000000);
+	surface=(uint16*)(0x06000000);
 
 	//bgSetPriority(1, 0);
 	//bgSetPriority(3, 1);
@@ -2102,7 +2102,7 @@ static __inline void add_user_defined_resolution(void)
 } /* add_user_defined_resolution */
 
 
-static __inline uint32 **get_physical_resolutions(void)
+static __inline Rect **get_physical_resolutions(void)
 {
     //const SDL_VideoInfo *vidInfo = SDL_GetVideoInfo();
     //Rect **modes = SDL_ListModes(vidInfo->vfmt, sdl_flags | SDL_FULLSCREEN);
@@ -2444,7 +2444,7 @@ void _updateScreenRect(long x, long y, long w, long h)
 	{
 		int yy;
 		uint16* videoRAM=surface;
-		uint16* sourceImage=frameplace;
+		uint16* sourceImage=(uint16*)frameplace;
 		for ( yy = y; yy < h; yy++ ) {
 			dmaCopyWords( 3, sourceImage+x, videoRAM+x, x+w );
 			videoRAM+= ( 512 >> 2 );
@@ -2966,4 +2966,3 @@ unsigned long getticks(void)
 } /* getticks */
 
 /* end of sdl_driver.c ... */
-
