@@ -57,6 +57,8 @@ typedef float64                 appfloat;
 #else
 #define boolean bool 
 typedef int                   fixed;
+/* 'byte' is not defined by libnds ndstypes.h — define it here */
+typedef uint8_t               byte;
 #endif
 
 
