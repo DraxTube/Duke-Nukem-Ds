@@ -554,7 +554,9 @@ void CONFIG_SetupJoystick( int32 scripthandle )
   SCRIPT_GetNumber( scripthandle, "Controls","JoystickPort",&function);
   CONTROL_JoystickPort = function;
   // read in rudder state
-  SCRIPT_GetNumber( scripthandle, "Controls","EnableRudder",&CONTROL_RudderEnabled);
+  { int32 _rudder = (int32)CONTROL_RudderEnabled;
+    SCRIPT_GetNumber( scripthandle, "Controls","EnableRudder",&_rudder);
+    CONTROL_RudderEnabled = (boolean)_rudder; }
    }
 
 void readsavenames(void)
@@ -822,4 +824,3 @@ void CONFIG_PutString( char *sectionname, char *entryname, char *string )
     if (!setupread) return;
     SCRIPT_PutString(scripthandle, sectionname, entryname, string);
 }
-
