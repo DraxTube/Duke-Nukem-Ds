@@ -322,11 +322,9 @@ extern int32 SafeOpenRead(const char *_filename, int32 filetype);
 extern void SafeRead(int32 handle, void *buffer, int32 count);
 extern void SafeWrite(int32 handle, void *buffer, int32 count);
 extern void SafeWriteString(int handle, char *buffer);
-#ifndef __NDS__
 extern void *SafeMalloc(long size);
 extern long MotoLong(long l);
 extern long IntelLong(long l);
-#endif
 extern void SafeRealloc(void **x, int32 size);
 extern void *SafeLevelMalloc(long size);
 extern void SafeFree(void *ptr);
