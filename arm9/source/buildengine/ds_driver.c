@@ -1494,7 +1494,7 @@ static void set_sdl_renderer(void)
         BG3_CX = 0;
         BG3_CY = 0; 
 	
-    surface=(uint8*)(0x06000000); 
+    surface=(uint16*)(0x06000000); 
 #endif
 		//surface=malloc(256*192);
 
