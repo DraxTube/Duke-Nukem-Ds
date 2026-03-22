@@ -7,6 +7,9 @@ endif
 
 include $(DEVKITARM)/ds_rules
 
+# Explicit fallback in case ds_rules does not set LIBNDS
+LIBNDS	?=	$(DEVKITPRO)/libnds
+
 #---------------------------------------------------------------------------------
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
