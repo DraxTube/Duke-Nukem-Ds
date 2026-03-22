@@ -11,32 +11,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: devkitpro/devkitarm-nds:latest
+      image: devkitpro/devkitarm:latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Build ARM7
-        run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitARM
-          export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
-          cd arm7 && make
+        run: cd arm7 && make
 
       - name: Build ARM9
-        run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitARM
-          export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
-          cd arm9 && make
+        run: cd arm9 && make
 
       - name: Build final NDS ROM
-        run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitARM
-          export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
-          make
+        run: make
 
       - name: Upload duke3d.nds
         uses: actions/upload-artifact@v4
