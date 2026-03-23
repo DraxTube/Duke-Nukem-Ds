@@ -17,21 +17,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Find calico symbols
+      - name: Diagnose build environment
         run: |
-          for lib in $DEVKITPRO/calico/lib/*.a; do
-            if arm-none-eabi-nm "$lib" 2>/dev/null | grep -q "initSystem"; then
-              echo "initSystem found in: $lib"
-            fi
-            if arm-none-eabi-nm "$lib" 2>/dev/null | grep -q "__libnds_mpu_setup"; then
-              echo "__libnds_mpu_setup found in: $lib"
-            fi
-            if arm-none-eabi-nm "$lib" 2>/dev/null | grep -q "__secure_area__"; then
-              echo "__secure_area__ found in: $lib"
-            fi
-          done
-          echo "=== ds_arm9.specs contents ==="
-          cat $DEVKITPRO/devkitARM/arm-none-eabi/lib/ds_arm9.specs 2>/dev/null ||           find $DEVKITPRO -name "ds_arm9.specs" 2>/dev/null -exec cat {} \;
+          echo "=== all .specs files ==="
+          find $DEVKITPRO -name "*.specs" 2>/dev/null
+          echo "=== calico ds9.ld ==="
+          cat $DEVKITPRO/calico/lib/ds9.ld
+          echo "=== which libs have initSystem ==="
+          arm-none-eabi-nm $DEVKITPRO/calico/lib/libnds9.a 2>/dev/null | grep "initSystem"
+          arm-none-eabi-nm $DEVKITPRO/calico/lib/libcalico_ds9.a 2>/dev/null | grep "initSystem\|__libnds_mpu\|__libnds_exit\|__dsimode"
+          echo "=== devkitARM lib dir ==="
+          ls $DEVKITPRO/devkitARM/arm-none-eabi/lib/
 
       - name: Build ARM9
         run: cd arm9 && make
