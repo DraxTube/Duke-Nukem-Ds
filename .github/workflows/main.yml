@@ -17,6 +17,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Find calico symbols
+        run: |
+          for lib in $DEVKITPRO/calico/lib/*.a; do
+            if arm-none-eabi-nm "$lib" 2>/dev/null | grep -q "initSystem"; then
+              echo "initSystem found in: $lib"
+            fi
+            if arm-none-eabi-nm "$lib" 2>/dev/null | grep -q "__libnds_mpu_setup"; then
+              echo "__libnds_mpu_setup found in: $lib"
+            fi
+            if arm-none-eabi-nm "$lib" 2>/dev/null | grep -q "__secure_area__"; then
+              echo "__secure_area__ found in: $lib"
+            fi
+          done
+          echo "=== ds_arm9.specs contents ==="
+          cat $DEVKITPRO/devkitARM/arm-none-eabi/lib/ds_arm9.specs 2>/dev/null ||           find $DEVKITPRO -name "ds_arm9.specs" 2>/dev/null -exec cat {} \;
+
       - name: Build ARM9
         run: cd arm9 && make
 
