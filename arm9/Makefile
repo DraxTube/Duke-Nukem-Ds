@@ -49,7 +49,7 @@ LIBS	:=	-lfat -lnds9 -lcalico_ds9 -lm
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(DEVKITPRO)/calico
+LIBDIRS	:=	$(DEVKITPRO)/calico $(DEVKITPRO)/libnds
  
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
