@@ -17,15 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Diagnose devkitpro environment
-        run: |
-          echo "=== calico lib dir ==="
-          ls $DEVKITPRO/calico/lib/ 2>/dev/null || echo "no calico lib dir"
-          echo "=== libnds lib dir ==="
-          ls $DEVKITPRO/libnds/lib/
-          echo "=== available NDS packages ==="
-          dkp-pacman -Ss nds 2>/dev/null | head -40 || true
-
       - name: Build ARM9
         run: cd arm9 && make
 
