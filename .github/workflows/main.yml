@@ -17,31 +17,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install NDS development packages
+      - name: Install NDS packages
         run: |
           dkp-pacman -Syu --noconfirm || true
           dkp-pacman -S nds-dev --noconfirm || true
-
-      - name: Check library locations
-        run: |
-          echo "=== libnds ==="
-          find /opt/devkitpro -name "libnds9*" 2>/dev/null
-          echo "=== calico ==="
-          find /opt/devkitpro -name "libcalico*" 2>/dev/null
-          echo "=== initSystem ==="
-          find /opt/devkitpro -name "*.a" 2>/dev/null | while read f; do
-            if arm-none-eabi-nm "$f" 2>/dev/null | grep -q "T initSystem"; then
-              echo "FOUND initSystem in $f"
-            fi
-          done
-          echo "=== __libnds_mpu_setup ==="
-          find /opt/devkitpro -name "*.a" 2>/dev/null | while read f; do
-            if arm-none-eabi-nm "$f" 2>/dev/null | grep -q "__libnds_mpu_setup"; then
-              echo "FOUND __libnds_mpu_setup in $f"
-            fi
-          done
-          echo "=== ds_arm9.specs ==="
-          cat /opt/devkitpro/devkitARM/arm-none-eabi/lib/ds_arm9.specs 2>/dev/null || echo "NOT FOUND"
 
       - name: Build ARM9
         run: cd arm9 && make
