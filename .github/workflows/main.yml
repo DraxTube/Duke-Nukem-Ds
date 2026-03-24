@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: devkitpro/devkitpro:latest
+      image: devkitpro/devkitarm:latest
 
     steps:
       - name: Checkout repository
@@ -21,6 +21,9 @@ jobs:
         run: |
           dkp-pacman -Syu --noconfirm || true
           dkp-pacman -S nds-dev --noconfirm || true
+          echo "=== Verify libnds ==="
+          ls -la $(DEVKITPRO)/libnds/lib/ 2>/dev/null || echo "libnds not at DEVKITPRO/libnds"
+          find /opt/devkitpro -name "libnds9.a" 2>/dev/null || echo "libnds9.a not found anywhere"
 
       - name: Build ARM9
         run: cd arm9 && make
