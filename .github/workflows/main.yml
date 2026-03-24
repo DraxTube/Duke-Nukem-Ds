@@ -17,17 +17,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Diagnose build environment
+      - name: Install NDS development packages
         run: |
-          echo "=== ds_arm9.specs ==="
-          cat /opt/devkitpro/devkitARM/arm-none-eabi/lib/ds_arm9.specs
-          echo "=== devkitARM arm-none-eabi lib dir ==="
-          ls /opt/devkitpro/devkitARM/arm-none-eabi/lib/
-          echo "=== search initSystem in all libs ==="
-          for f in /opt/devkitpro/calico/lib/*.a /opt/devkitpro/devkitARM/arm-none-eabi/lib/*.a; do
-            arm-none-eabi-nm "$f" 2>/dev/null | grep -l "T initSystem" && echo "  in $f" || true
-          done
-          echo "=== done ==="
+          dkp-pacman -Syu --noconfirm
+          dkp-pacman -S nds-dev --noconfirm
 
       - name: Build ARM9
         run: cd arm9 && make
