@@ -32,10 +32,15 @@ CFLAGS	:=	-g -Wall -O2\
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
 			-ffast-math \
 			-Wno-deprecated-declarations \
-			-Wno-unused-variable -Wno-unused-but-set-variable \
+			-Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function \
 			-Wno-misleading-indentation \
 			-Wno-pointer-sign \
 			-Wno-attributes \
+			-Wno-return-type -Wno-uninitialized -Wno-maybe-uninitialized \
+			-Wno-stringop-overflow -Wno-aggressive-loop-optimizations \
+			-Wno-char-subscripts -Wno-format -Wno-missing-braces \
+			-Wno-array-bounds -Wno-address -Wno-tautological-compare \
+			-Wno-switch-outside-range -Wno-unused-value \
 			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9 -D__NDS__ -DPLATFORM_UNIX=1 -DSTUB_NETWORKING=1 -DCONTROLS_CONFIG_MENU=1 #-DUDP_NETWORKING=1 #-DNET_MENU=1 
