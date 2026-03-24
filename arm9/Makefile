@@ -31,16 +31,7 @@ ARCH	:=	-mthumb -mthumb-interwork
 CFLAGS	:=	-g -Wall -O2\
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
 			-ffast-math \
-			-Wno-deprecated-declarations \
-			-Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function \
-			-Wno-misleading-indentation \
-			-Wno-pointer-sign \
-			-Wno-attributes \
-			-Wno-return-type -Wno-uninitialized -Wno-maybe-uninitialized \
-			-Wno-stringop-overflow -Wno-aggressive-loop-optimizations \
-			-Wno-char-subscripts -Wno-format -Wno-missing-braces \
-			-Wno-array-bounds -Wno-address -Wno-tautological-compare \
-			-Wno-switch-outside-range -Wno-unused-value \
+			-w \
 			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9 -D__NDS__ -DPLATFORM_UNIX=1 -DSTUB_NETWORKING=1 -DCONTROLS_CONFIG_MENU=1 #-DUDP_NETWORKING=1 #-DNET_MENU=1 
@@ -48,19 +39,18 @@ CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH) -march=armv5te -mtune=arm946e-s
 
-LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) \
-			$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-Wl,--start-group -lfat -lnds9 -lcalico_ds9 -lc -lsysbase -lm -Wl,--end-group -lnds9
+LIBS	:=	-lfat -lnds9
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(DEVKITPRO)/calico $(DEVKITPRO)/libnds
+LIBDIRS	:=	$(LIBNDS)
  
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
