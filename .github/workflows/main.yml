@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: devkitpro/devkitarm:latest
+      image: devkitpro/devkitpro:latest
 
     steps:
       - name: Checkout repository
@@ -19,30 +19,29 @@ jobs:
 
       - name: Install NDS development packages
         run: |
-          dkp-pacman -Syu --noconfirm
-          dkp-pacman -S nds-dev --noconfirm
+          dkp-pacman -Syu --noconfirm || true
+          dkp-pacman -S nds-dev --noconfirm || true
 
       - name: Check library locations
         run: |
-          echo "=== libnds lib dir ==="
-          ls -la /opt/devkitpro/libnds/lib/ 2>/dev/null || echo "NOT FOUND"
-          echo "=== calico lib dir ==="
-          ls -la /opt/devkitpro/calico/lib/ 2>/dev/null || echo "NOT FOUND"
-          echo "=== search for initSystem ==="
-          for f in /opt/devkitpro/libnds/lib/*.a /opt/devkitpro/calico/lib/*.a; do
+          echo "=== libnds ==="
+          find /opt/devkitpro -name "libnds9*" 2>/dev/null
+          echo "=== calico ==="
+          find /opt/devkitpro -name "libcalico*" 2>/dev/null
+          echo "=== initSystem ==="
+          find /opt/devkitpro -name "*.a" 2>/dev/null | while read f; do
             if arm-none-eabi-nm "$f" 2>/dev/null | grep -q "T initSystem"; then
               echo "FOUND initSystem in $f"
             fi
           done
-          echo "=== search for __libnds_mpu_setup ==="
-          for f in /opt/devkitpro/libnds/lib/*.a /opt/devkitpro/calico/lib/*.a; do
+          echo "=== __libnds_mpu_setup ==="
+          find /opt/devkitpro -name "*.a" 2>/dev/null | while read f; do
             if arm-none-eabi-nm "$f" 2>/dev/null | grep -q "__libnds_mpu_setup"; then
               echo "FOUND __libnds_mpu_setup in $f"
             fi
           done
           echo "=== ds_arm9.specs ==="
           cat /opt/devkitpro/devkitARM/arm-none-eabi/lib/ds_arm9.specs 2>/dev/null || echo "NOT FOUND"
-          echo "=== done ==="
 
       - name: Build ARM9
         run: cd arm9 && make
