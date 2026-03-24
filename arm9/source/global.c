@@ -688,8 +688,10 @@ void SafeFree (void * ptr)
 #endif
 
 #ifdef _LITTLE_ENDIAN
+#undef BYTE_ORDER
 #define BYTE_ORDER LITTLE_ENDIAN
 #elif defined(_BIG_ENDIAN)
+#undef BYTE_ORDER
 #define BYTE_ORDER BIG_ENDIAN
 #endif
 
