@@ -19,15 +19,15 @@ jobs:
 
       - name: Diagnose build environment
         run: |
-          echo "=== all .specs files ==="
-          find $DEVKITPRO -name "*.specs" 2>/dev/null
-          echo "=== calico ds9.ld ==="
-          cat $DEVKITPRO/calico/lib/ds9.ld
-          echo "=== which libs have initSystem ==="
-          arm-none-eabi-nm $DEVKITPRO/calico/lib/libnds9.a 2>/dev/null | grep "initSystem"
-          arm-none-eabi-nm $DEVKITPRO/calico/lib/libcalico_ds9.a 2>/dev/null | grep "initSystem\|__libnds_mpu\|__libnds_exit\|__dsimode"
-          echo "=== devkitARM lib dir ==="
-          ls $DEVKITPRO/devkitARM/arm-none-eabi/lib/
+          echo "=== ds_arm9.specs ==="
+          cat /opt/devkitpro/devkitARM/arm-none-eabi/lib/ds_arm9.specs
+          echo "=== devkitARM arm-none-eabi lib dir ==="
+          ls /opt/devkitpro/devkitARM/arm-none-eabi/lib/
+          echo "=== search initSystem in all libs ==="
+          for f in /opt/devkitpro/calico/lib/*.a /opt/devkitpro/devkitARM/arm-none-eabi/lib/*.a; do
+            arm-none-eabi-nm "$f" 2>/dev/null | grep -l "T initSystem" && echo "  in $f" || true
+          done
+          echo "=== done ==="
 
       - name: Build ARM9
         run: cd arm9 && make
